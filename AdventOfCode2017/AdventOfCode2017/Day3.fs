@@ -1,4 +1,3 @@
-open System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar
 module Day3
 
 let sameDirectionSteps = 
@@ -64,14 +63,14 @@ let genNextSpiralStep2 (prev, posMap) dir =
     (newMemPos, Map.add (newx, newy) newMemPos posMap)
 
 let findProblem2 inputValue = 
-    let initialList = directionSteps |> Seq.take (inputValue - 1)
+    let initialList = directionSteps |> Seq.take (inputValue - 1) |> List.ofSeq
     let rec innerFind (dir::rest) mapSoFar prev =
-          let (val, newMap) = genNextSpiralStep2 (prev, mapSoFar) dir
-          if val > inputValue
-          then val
-          else innerFind rest newMap val
+          let (v, newMap) = genNextSpiralStep2 (prev, mapSoFar) dir
+          if v.value > inputValue
+          then v
+          else innerFind rest newMap v
     
-    innerFind initialList (Map[((0,0), {value = 1; x = 0; y = 0})])
+    innerFind initialList (Map[((0,0), {value = 1; x = 0; y = 0})]) {value = 1; x = 0; y = 0}
 
 let result1 = 
     spiral 347991
@@ -79,6 +78,4 @@ let result1 =
     |> fun memPos -> abs(memPos.x) + abs(memPos.y)
 
 let result2 = 
-    spiral2 347991
-    |> List.head
-    |> fun memPos -> abs(memPos.x) + abs(memPos.y)
+    findProblem2 347991
