@@ -10,7 +10,6 @@
     <Compile Include="Day4.fs" />
     <Compile Include="AdventOfCode2017.fs" />
     <None Include="App.config" />
-    
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
