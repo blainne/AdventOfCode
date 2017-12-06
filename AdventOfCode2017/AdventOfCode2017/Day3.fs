@@ -20,7 +20,6 @@ let directionSteps =
     |> Seq.collect (fun (n,dir) -> Seq.replicate n dir)
 
 type IndexModifier = {x:int; y:int}
-
 type MemPos = {value:int; x:int; y:int}
 
 let dirToIndexMod =
