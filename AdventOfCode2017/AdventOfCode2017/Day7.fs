@@ -1,5 +1,7 @@
 module Day7
 open System.IO
+open System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar
+open System.Windows.Forms.ListBox
 
 type Node = 
     {
@@ -8,12 +10,12 @@ type Node =
         children : string list
     }
 
-let valOrDefault defaultVal key map = 
+let valOrDefault getVal defaultVal key map = 
     if Map.containsKey key map
-    then map.[key]
+    then getVal map.[key]
     else defaultVal
 
-let valOrZero = valOrDefault 0 
+let valOrZero = valOrDefault fst 0
 
 let parseRow (row:string) =
     let readName (tok::rest) =
@@ -32,30 +34,65 @@ let parseRow (row:string) =
             {tkn with children = rest}
     
     row.Split ([|' ';','|], System.StringSplitOptions.RemoveEmptyEntries)
-    |> List.ofArray
-    |> readName
-    |> readWeight
-    |> readChildren
+    |> (List.ofArray>>readName>>readWeight>>readChildren)
+
 
 let updateMapWithNames map (node:Node) =
     let updateKey map key = 
         let value = valOrZero key map
-        Map.add key (value + 1) map
+        Map.add key (value + 1, node) map
 
     let updated = updateKey map (node.name)
     node.children
     |> List.fold updateKey updated
 
-
-
-let calc path =
+let parseInput path = 
     path
     |> File.ReadAllLines
     |> Array.map parseRow
-    |> Array.fold updateMapWithNames (Map[])
 
+let findRoot = Map.pick (fun _ (v,node) -> 
+                    if v = 1 
+                    then Some(node) 
+                    else None)
+
+let calc1 path =
+    path
+    |> parseInput
+    |> Array.fold updateMapWithNames (Map[])
+    |> findRoot
+
+let rec foldBackMapTree 
+        folder 
+        init 
+        (map : Map<string, int*Node>)
+        rootKey =
+    let _,node = map.[rootKey]
+
+    if List.isEmpty node.children
+    then init
+    else 
+        let childResults = 
+            List.map 
+                (fun c ->foldBackMapTree folder init map c) node.children
+        folder childResults node
+
+type Balance = 
+   | IsOk of int * int
+   | NodeShouldBe of int
+let calc2 path =
+    let map =     
+        path
+        |> parseInput
+        |> Array.fold updateMapWithNames (Map[])
+    
+    let root = findRoot map
+
+    let folder childResults Node = 
+        if List.
+
+    
+    
 let path = "./AdventOfCode2017/AdventOfCode2017/inputs/Day7-1.txt"
 
-(calc path)
-|> Map.filter (fun _ v -> v = 1)
-|> printfn "%A"
+let result1 = calc1 path
