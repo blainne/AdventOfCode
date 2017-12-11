@@ -14,22 +14,41 @@ let processInput (str:string) =
     |> Array.map (fun s -> movement.[s])
     |> List.ofArray
 
-let calc1 input =
-    let (posRow, posCol) = 
-        input 
-        |> processInput
-        |> calcTargetPos
-    
+let countStepsToPos (posRow, posCol)= 
     let verticalsRequired = 
         match abs(posRow) - abs(posCol) with
         | x when x > 0 -> x/2
         | _ -> 0
     
     abs(posCol) + verticalsRequired
-    
+
+let calcTargetAndMaxSoFar acc move =
+    let (currPos, maxStepsSoFar) = acc
+    let newPos = addMovement currPos move
+    let newSteps = countStepsToPos newPos
+
+    (newPos, max maxStepsSoFar newSteps)
+
+let calc1 input =
+    input 
+    |> processInput
+    |> calcTargetPos
+    |> countStepsToPos
 let result1 = 
     let input = 
          "./AdventOfCode2017/AdventOfCode2017/inputs/Day11-1.txt"
          |> File.ReadAllText
 
     calc1 input
+
+let calc2 input =
+    input 
+    |> processInput
+    |> List.fold calcTargetAndMaxSoFar ((0,0),0)
+    |> snd
+let result2 = 
+    let input = 
+         "./AdventOfCode2017/AdventOfCode2017/inputs/Day11-1.txt"
+         |> File.ReadAllText
+
+    calc2 input
