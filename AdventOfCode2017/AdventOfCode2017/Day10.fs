@@ -34,9 +34,13 @@ let calc arr lengths =
     lengths 
     |> Seq.fold processStep (arr, 0, 0)
 
+
+let replicate n s =
+    seq[for i in 1..n do yield! s]
+
 let testLengths = [3;4;1;5]
 let testArr = [|0..4|]
-let inputArr = [|0..255|]
+let input = [0..255]
 let inputStr = "63,144,180,149,1,255,167,84,125,65,188,0,2,254,229,24"
 
 
@@ -45,23 +49,21 @@ let result1 =
         inputStr.Split [|','|]
         |> List.ofArray
         |> List.map (int)
-    let fullArr,_,_ = calc inputArr lengths
+    let fullArr,_,_ = calc (Array.ofList input) lengths
     fullArr.[0]*fullArr.[1]
 
-let replicate n s =
-    seq[for i in 1..n do yield! s]
+
 let result2 =
     let lengths =
-        ""
+        inputStr
         |> Seq.map int
         |> fun s -> Seq.append s [17; 31; 73; 47; 23]
-        |> replicate 64 
+        |> replicate 64
 
-    let sparseHash,_,_ = calc inputArr lengths
+    let sparseHash,_,_ = calc (Array.ofList input) lengths
 
     sparseHash
     |> Array.chunkBySize 16
     |> Array.map (Array.reduce (^^^))
-    |> Array.map (sprintf "%x")
+    |> Array.map (sprintf "%02x")
     |> String.concat ""
-
