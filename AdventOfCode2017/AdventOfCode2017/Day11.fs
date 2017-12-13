@@ -4,15 +4,9 @@ let movement =
     Map[("n",(2,0)); ("ne",(1,-1));("nw",(1,1));
         ("s",(-2,0));("se",(-1,-1));("sw",(-1,1))]
 
-
 let addMovement (v1,h1) (v2,h2) = (v1+v2, h1+h2)
 
 let calcTargetPos = List.fold (addMovement) (0,0)
-
-let processInput (str:string) =
-    str.Split[|','|]
-    |> Array.map (fun s -> movement.[s])
-    |> List.ofArray
 
 let countStepsToPos (posRow, posCol)= 
     let verticalsRequired = 
@@ -21,6 +15,11 @@ let countStepsToPos (posRow, posCol)=
         | _ -> 0
     
     abs(posCol) + verticalsRequired
+
+let processInput (str:string) =
+    str.Split[|','|]
+    |> Array.map (fun s -> movement.[s])
+    |> List.ofArray
 
 let calcTargetAndMaxSoFar acc move =
     let (currPos, maxStepsSoFar) = acc
