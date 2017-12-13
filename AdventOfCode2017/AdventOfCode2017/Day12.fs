@@ -27,7 +27,42 @@ let parseInput (str:string) =
     |>Array.map parseRow
     |>Array.fold updateMapping (Map[])
 
-let rec calcReachable 
+let addMany collection set =
+    collection 
+    |> Seq.fold (fun s el -> Set.add el s) set
+
+let calcReachable fromEl (graph:Map<int, int list>) =
+    let rec calcInternal knownSoFar =
+        let toAdd = 
+            knownSoFar
+            |> Set.fold 
+                (fun s el -> addMany graph.[el] s)
+                (Set[])
+        
+        if Set.isEmpty (toAdd - knownSoFar)
+        then knownSoFar
+        else calcInternal (Set.union toAdd knownSoFar)
+
+    calcInternal (Set[fromEl])
+
+
+let calcGroups graph =
+    let keys = 
+        graph 
+        |> Map.toList 
+        |> List.map fst
+        |> Set.ofList
+         
+    let rec calc remainingKeys groupsSoFar =
+        if Set.isEmpty remainingKeys
+        then groupsSoFar
+        else
+            let from =remainingKeys |> Set.toList |> List.head
+            let nextGroup = calcReachable from graph
+            let newRemainingKeys = remainingKeys - nextGroup
+            calc newRemainingKeys (nextGroup::groupsSoFar)
+
+    calc keys []
 let testInput = 
     """0 <-> 2
         1 <-> 1
@@ -37,4 +72,17 @@ let testInput =
         5 <-> 6
         6 <-> 4, 5"""
 let path = "./AdventOfCode2017/AdventOfCode2017/inputs/Day12-1.txt"
-parseInput testInput
+
+
+let result1 =
+    path
+    |> IO.File.ReadAllText
+    |> parseInput
+    |> calcReachable 0
+    |> Set.count    
+let result2 =
+    path
+    |> IO.File.ReadAllText
+    |> parseInput
+    |> calcGroups
+    |> List.length
