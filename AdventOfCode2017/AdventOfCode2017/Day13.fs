@@ -36,7 +36,7 @@ let updateFirewall (scannerCfg:Map<int, int>) firewall =
                 | x, Down when x = (limit-1) -> Up, -1
                 | _, Up -> Up, -1
                 | _, Down -> Down, 1
-            Cell(v+(1*dirModifier), newDir)
+            Cell(v+(dirModifier), newDir)
     
     Array.mapi updateLayer firewall
         
@@ -60,9 +60,24 @@ let testInput =
     
 let path = "./AdventOfCode2017/AdventOfCode2017/inputs/Day13-1.txt"
 
-let (cfg, max) = parseInput (IO.File.ReadAllLines path)
-let fw = initFirewall (cfg,max)
+let result1 = 
+    let (cfg, max) = parseInput (IO.File.ReadAllLines path)
+    let fw = initFirewall (cfg,max)
 
-findCaughtSpots fw (cfg,max)
-|> snd
-|> List.sumBy (fun e -> e * cfg.[e])
+    findCaughtSpots fw (cfg,max)
+    |> snd
+    |> List.sumBy (fun e -> e * cfg.[e])
+
+
+let rec calcWaitSteps firewall (cfg,max) waitStep=
+    let _, caughtIn = findCaughtSpots firewall (cfg,max) 
+    match caughtIn with 
+    | [] -> waitStep
+    | _ -> 
+        let newFw = updateFirewall cfg firewall
+        calcWaitSteps newFw (cfg,max) (waitStep + 1)
+
+let result2 = 
+    let (cfg, max) = parseInput (IO.File.ReadAllLines path)
+    let fw = initFirewall (cfg,max)
+    calcWaitSteps fw (cfg,max) 0
