@@ -1,6 +1,15 @@
 module Day13
 open System
 
+(*
+A very very slow solution. 
+Second problem took under an hour to get the result.
+It basically simulates the scanners exactly as described.
+There are way better solutions that do not track 
+the state of each scanner but just check with a smart formula 
+whether a scanner is in position 0 at given millisecond.
+*)
+
 let parseInput(lines: string []) = 
     lines
     |> Array.fold 
