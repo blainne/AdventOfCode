@@ -52,7 +52,7 @@ let hash inputStr =
     |> Array.map (Array.reduce (^^^))
 
 let HammingWeights =
-    [0;1;1;2]
+    [0;1;1;2;1;2;2;3;1;2;2;3;2;3;3;4]
 
 let sumHashBits = 
     Array.map (fun b -> )
