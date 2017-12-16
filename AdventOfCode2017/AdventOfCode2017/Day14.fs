@@ -1,4 +1,3 @@
-open System.Web.UI.WebControls
 module Day14
 
 let movePos curPos n arr = (curPos+n)%(Array.length arr)
@@ -55,12 +54,25 @@ let hash inputStr =
 let HammingWeights =
     [|0;1;1;2;1;2;2;3;1;2;2;3;2;3;3;4|]
 
-let bitRep n =
-    let rec calc num bits =
-        if num = 0 then bits
-        else calc (num>>>1) ((num%2)::bits)
+type RegionSymbol = | Zero | Bit | Region of int 
+
+let bitRep padding n =
+    let rec calc num bits len =
+        if num < 2 then (num::bits, len + 1)
+        else calc (num>>>1) ((num%2)::bits) (len + 1)
     
-    calc n []
+    let padZeros (list,listLen) =
+        list
+        |> List.append (List.init (padding - listLen) (fun _ -> 0))
+
+    calc n [] 0
+    |> padZeros
+    |> Array.ofList 
+    |> Array.map (function | 0 -> Zero | 1 -> Bit | _ -> failwith "")
+
+
+let hashToBits padding = Array.collect (bitRep padding)
+
 
 let bitSums = 
     Array.map 
@@ -68,18 +80,58 @@ let bitSums =
             HammingWeights.[b/16] 
             + HammingWeights.[b%16])
     >> Array.sum
-
+let maxHashI = 127
 let inputCore = "ugkiagan" + "-"
 let result1 = 
-
-    [0..127]
+    [0..maxHashI]
     |> List.fold 
         (fun sum i ->
             let h = hash (inputCore + (i.ToString()))
             sum + (bitSums h))
         0
 
+let rec markRegion 
+        (x,y) 
+        regNum 
+        (arr:RegionSymbol [] []) =
+    if x < 0 || y < 0 || x >= arr.Length || y>= arr.Length 
+    then (arr,false)
+    else
+        match arr.[x].[y] with
+        | Zero -> (arr,false) | Region(_) -> (arr,false)
+        | Bit -> 
+            arr.[x].[y] <- Region(regNum)
+            
+            markRegion (x-1, y) regNum arr
+            markRegion (x, y-1) regNum arr
+            markRegion (x+1, y) regNum arr
+            markRegion (x, y+1) regNum arr
+
+            (arr, true)
+
+
+
+
 let result2 = 
     let hashes = 
-        [0..127]
-        |> List.map hash (inputCore + (i.ToString()))
+        [0..maxHashI]
+        |> List.map (fun i -> hash (inputCore + (i.ToString())))
+        |> Array.ofList 
+        |> Array.map (hashToBits 8)
+
+    let indices = 
+        seq {for x in 0..maxHashI do
+             for y in 0..maxHashI do
+             yield x,y}
+    
+    let num, regions = 
+        indices
+        |> Seq.fold 
+                (fun (regNum,arr) pos -> 
+                 let newArr, foundNewReg = markRegion pos regNum arr
+                 let newRegNum = 
+                    if foundNewReg then regNum + 1 else regNum         
+                 (newRegNum, newArr))
+            (0, hashes)
+
+    num

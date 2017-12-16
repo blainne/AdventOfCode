@@ -40,7 +40,7 @@ let replicate n s =
 
 let testLengths = [3;4;1;5]
 let testArr = [|0..4|]
-let input = [0..255]
+let baseArr = [0..255]
 let inputStr = "63,144,180,149,1,255,167,84,125,65,188,0,2,254,229,24"
 
 
@@ -49,7 +49,7 @@ let result1 =
         inputStr.Split [|','|]
         |> List.ofArray
         |> List.map (int)
-    let fullArr,_,_ = calc (Array.ofList input) lengths
+    let fullArr,_,_ = calc (Array.ofList baseArr) lengths
     fullArr.[0]*fullArr.[1]
 
 
@@ -60,7 +60,7 @@ let result2 =
         |> fun s -> Seq.append s [17; 31; 73; 47; 23]
         |> replicate 64
 
-    let sparseHash,_,_ = calc (Array.ofList input) lengths
+    let sparseHash,_,_ = calc (Array.ofList baseArr) lengths
 
     sparseHash
     |> Array.chunkBySize 16
