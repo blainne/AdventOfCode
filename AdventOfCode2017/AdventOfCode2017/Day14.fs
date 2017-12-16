@@ -1,3 +1,4 @@
+open System.Web.UI.WebControls
 module Day14
 
 let movePos curPos n arr = (curPos+n)%(Array.length arr)
@@ -34,7 +35,7 @@ let calc arr lengths =
     lengths 
     |> Seq.fold processStep (arr, 0, 0)
 
-
+let baseArr = [0..255]
 let replicate n s =
     seq[for i in 1..n do yield! s]
 
@@ -45,33 +46,40 @@ let hash inputStr =
         |> fun s -> Seq.append s [17; 31; 73; 47; 23]
         |> replicate 64
 
-    let sparseHash,_,_ = calc (Array.ofList input) lengths
+    let sparseHash,_,_ = calc (Array.ofList baseArr) lengths
 
     sparseHash
     |> Array.chunkBySize 16
     |> Array.map (Array.reduce (^^^))
 
 let HammingWeights =
-    [0;1;1;2;1;2;2;3;1;2;2;3;2;3;3;4]
+    [|0;1;1;2;1;2;2;3;1;2;2;3;2;3;3;4|]
 
-let sumHashBits = 
-    Array.map (fun b -> )
+let bitRep n =
+    let rec calc num bits =
+        if num = 0 then bits
+        else calc (num>>>1) ((num%2)::bits)
+    
+    calc n []
 
+let bitSums = 
+    Array.map 
+        (fun b -> 
+            HammingWeights.[b/16] 
+            + HammingWeights.[b%16])
+    >> Array.sum
+
+let inputCore = "ugkiagan" + "-"
 let result1 = 
-    let inputCore = "ugkiagan" + "-"
+
     [0..127]
     |> List.fold 
         (fun sum i ->
             let h = hash (inputCore + (i.ToString()))
-            sum + sumHashBits h)
-        
+            sum + (bitSums h))
+        0
 
-let rec intToBinary i =
-    match i with
-    | 0 | 1 -> string i
-    | _ ->
-        let bit = string (i % 2)
-        (intToBinary (i / 2)) + bit
-        
-[0..0xf]
-|> List.map intToBinary
+let result2 = 
+    let hashes = 
+        [0..127]
+        |> List.map hash (inputCore + (i.ToString()))
