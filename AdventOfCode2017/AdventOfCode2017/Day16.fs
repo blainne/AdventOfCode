@@ -1,7 +1,6 @@
 module Day16
 open System.Collections.Generic
 
-
 type Instr =
     | Spin of int
     | Exchange of int*int
