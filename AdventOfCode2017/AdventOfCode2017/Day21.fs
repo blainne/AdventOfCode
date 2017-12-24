@@ -95,18 +95,7 @@ let flatten (mtxs, sizeInSubMatrixes) =
     |> flattenRows subSize sizeInSubMatrixes 
     |> List.collect id
 
-let path1 = "./AdventOfCode2017/AdventOfCode2017/inputs/Day21-1.txt"
-
-//should be 155
-let path2 = "./AdventOfCode2017/AdventOfCode2017/inputs/Day21-2.txt"
-//should be 208
-let path3 = "./AdventOfCode2017/AdventOfCode2017/inputs/Day21-3.txt"
-let result1 = 
-    let rules = 
-        path1
-        |> File.ReadAllLines
-        |> parseInput
-        |> expandRules 
+let simulate steps (rules:Map<char list, char list>) = 
 
     let initial = ".#...####" |> List.ofSeq
     let workflow mtx _ =
@@ -116,8 +105,21 @@ let result1 =
                     (List.map (fun m -> rules.[m]) mat,s))
             |> flatten
 
-    [1..18]
+    [1..steps]
     |> List.fold workflow initial
     |> List.where ((=) '#')
     |> List.length
 
+let path1 = "./AdventOfCode2017/AdventOfCode2017/inputs/Day21-1.txt"
+
+let rules = 
+        path1
+        |> File.ReadAllLines
+        |> parseInput
+        |> expandRules
+
+let result1 =   
+    simulate 5 rules
+
+let result2 =
+    simulate 18 rules
