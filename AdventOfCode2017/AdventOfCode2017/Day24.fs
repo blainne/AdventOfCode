@@ -95,3 +95,5 @@ let result2 =
     |> snd
     |> List.maxBy (pathStrength)
     |> pathStrength
+
+
