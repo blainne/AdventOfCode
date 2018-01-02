@@ -45,7 +45,7 @@ module Parsing =
     
     let apply pf p =
         pf >>= (fun f ->
-        p >>= (f>>retn))
+        p >>= (f>>retn)) 
 
     let (<*>) = apply
 
@@ -83,8 +83,7 @@ module Parsing =
 
     let takeSecond p1 p2 =
         (andThen p1 p2)
-            >>= fun (_,r2) -> retn r2
-           
+            >>= fun (_,r2) -> retn r2                 
     let (.>>.) = andThen
     let (.>>) = takeFirst
     let (>>.) = takeSecond
@@ -97,6 +96,9 @@ module Parsing =
         | [] -> retn []
         | h::t ->  
             consP h (sequence t)
+
+    let rec repeat n p =
+        p |> List.replicate n |> sequence
 
     let parseOneChar = 
         let innerF (inp:string) =
@@ -117,7 +119,9 @@ module Parsing =
         let innerF (inp:string) =
             inp.Split '\n'
             |> fun arr -> 
-                Ok{Value = arr.[0]; Remaining = inp.Substring (arr.[0].Length + 1)}
+                if Array.length arr = 1
+                then Ok{Value = arr.[0]; Remaining = ""}
+                else Ok{Value = arr.[0]; Remaining = inp.Substring (arr.[0].Length + 1)}
         
         Parser innerF
 
@@ -135,10 +139,66 @@ let initialSetup =
     secondLastWordParser "Begin in state "
     .>>. secondLastNumParser "Perform a diagnostic checksum after "
 
+type Dir = | Left | Right
+type Condition = {valCondition:int; newVal:int; moveDirection:Dir; nextState:string} 
+
+let strToDir = function
+    | "left" -> Left
+    | "right" -> Right
+    | _ -> failwith "invalid direction";
+
 
 
 let txt = """Begin in state A.
 Perform a diagnostic checksum after 6 steps.
-"""
 
-runP initialSetup txt
+In state A:
+  If the current value is 0:
+    - Write the value 1.
+    - Move one slot to the right.
+    - Continue with state B.
+  If the current value is 1:
+    - Write the value 0.
+    - Move one slot to the left.
+    - Continue with state B.
+
+In state B:
+  If the current value is 0:
+    - Write the value 1.
+    - Move one slot to the left.
+    - Continue with state A.
+  If the current value is 1:
+    - Write the value 1.
+    - Move one slot to the right.
+    - Continue with state A."""
+
+let conditionInstrParser =
+    let lineParsers = 
+        [       
+            (secondLastWordParser "  If the current value is ");
+            (secondLastWordParser "    - Write the value ")
+            (secondLastWordParser "    - Move one slot to the ");
+            (secondLastWordParser "    - Continue with state ");
+        ]
+
+    let mapCond (curr::newVal::dir::next::[]) =
+        {
+            valCondition = int curr; 
+            newVal = int newVal;
+            moveDirection = strToDir dir;
+            nextState = next;
+        }
+
+    sequence lineParsers |>> mapCond
+let stateConditionsParser = 
+    let condParsers = repeat 2 conditionInstrParser
+    let stateP = secondLastWordParser "In state "
+
+    parseTillEolOrEof >>. stateP .>>. condParsers
+
+
+runP (initialSetup .>>. (oneOrMore stateConditionsParser)) txt
+
+
+
+
