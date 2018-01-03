@@ -2,7 +2,7 @@ module Day25
 open System
 open System.IO
 
-//This approach is overkill here, 
+//This approach with parser combinators is overkill here, 
 //but I wanted to practice parser combinators
 module Parsing =
 
@@ -147,31 +147,6 @@ let strToDir = function
     | "right" -> Right
     | _ -> failwith "invalid direction";
 
-
-
-let txt = """Begin in state A.
-Perform a diagnostic checksum after 6 steps.
-
-In state A:
-  If the current value is 0:
-    - Write the value 1.
-    - Move one slot to the right.
-    - Continue with state B.
-  If the current value is 1:
-    - Write the value 0.
-    - Move one slot to the left.
-    - Continue with state B.
-
-In state B:
-  If the current value is 0:
-    - Write the value 1.
-    - Move one slot to the left.
-    - Continue with state A.
-  If the current value is 1:
-    - Write the value 1.
-    - Move one slot to the right.
-    - Continue with state A."""
-
 let conditionInstrParser =
     let lineParsers = 
         [       
@@ -196,9 +171,51 @@ let stateConditionsParser =
 
     parseTillEolOrEof >>. stateP .>>. condParsers
 
+let path = "./AdventOfCode2017/AdventOfCode2017/inputs/Day25-1.txt"
+let testpath = "./AdventOfCode2017/AdventOfCode2017/inputs/Day25-test.txt"
 
-runP (initialSetup .>>. (oneOrMore stateConditionsParser)) txt
+let readConfigAndCommands path =
+    let parseResult = 
+        path 
+        |> File.ReadAllText
+        |> runP (initialSetup .>>. (oneOrMore stateConditionsParser))   
+    
+    let initial, stateConditions =
+        match parseResult with
+        | Failure -> failwith "Couldn't parse the input"
+        | Ok r -> r.Value
 
+    (initial, Map.ofList stateConditions)
 
+type MachineState = 
+    {memory:Map<int32, int32>; pointer:int32; state:string; }
+    with member this.currVal = 
+        if this.memory.ContainsKey this.pointer
+        then this.memory.[this.pointer]
+        else 0
 
+let makeStep machineState (commands:Map<string,Condition list>) =
+    let cmd =
+        commands.[machineState.state]
+        |> List.pick (fun cmd -> 
+                if cmd.valCondition = machineState.currVal
+                then Some cmd
+                else None )
+        
+    let newMem = Map.add (machineState.pointer) (cmd.newVal) machineState.memory
+    let ptrMove = 
+        if cmd.moveDirection = Right then 1 else -1
 
+    {memory = newMem; pointer = machineState.pointer + ptrMove; state = cmd.nextState}
+
+let result1 = 
+    let (firstState, stepsToGo), commands = 
+        readConfigAndCommands path
+    
+    let machineState = {memory = Map[]; pointer = 0; state = firstState}
+
+    [1..stepsToGo]
+    |> List.fold (fun state _ -> makeStep state commands) machineState
+    |> (fun ms -> Map.toList ms.memory)
+    |> List.filter (fun (_,v) -> v = 1)
+    |> List.length
